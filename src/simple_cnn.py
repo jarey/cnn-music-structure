@@ -350,5 +350,11 @@ def main(num_epochs=1):
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description='Run a CNN for music structure segmentation.')
+    parser.add_argument('-e','--epochs',
+        help='Number of epochs to run.',
+        required=False, default=1)
+    args = parser.parse_args()
+    main(num_epochs=int(args.epochs))
 
