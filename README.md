@@ -1,0 +1,3 @@
+# Music structure segmentation with ConvNets!
+
+More info coming soon...
