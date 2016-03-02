@@ -283,7 +283,7 @@ def main(num_epochs=1):
             ):
             inputs, targets = batch
             train_err_increment = train_fn(inputs, targets)
-            train_err += train_err_increment 
+            train_err += train_err_increment
             train_error_hist.append(train_err_increment)
             train_batches += 1
 
