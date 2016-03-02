@@ -155,8 +155,7 @@ def use_preparsed_data(outputdir='./data/'):
     Give me some data that I already computed with get_data()!
     """
     npzfile = np.load(os.path.join(outputdir,'datadicts.npz'))
-    return npzfile['train'], npzfile['val'], npzfile['test']
-
+    return npzfile['train'].tolist(), npzfile['val'].tolist(), npzfile['test'].tolist()
 
 def serialize_data_chunk(
         sids,
