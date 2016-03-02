@@ -18,7 +18,7 @@ from theano.compile.nanguardmode import NanGuardMode #TODO remove
 import lasagne
 
 # My modules
-from generate_data import get_data
+from generate_data import get_data, use_preparsed_data
 
 def rel_error(x, y):
     """ Returns relative error """
@@ -167,15 +167,22 @@ def main(num_epochs=1):
     # Theano config
     theano.config.floatX = 'float32'
 
-    train, val, test = get_data(
-        n_songs_train=1,
-        n_songs_val=1,
-        n_songs_test=1,
-        outputdir='./dat/',
-        seed=None
-        )
+    train, val, test = None, None, None
+    try:
+        train, val, test = use_preparsed_data(
+            outputdir='./data/',
+            )
+    except:
+        train, val, test = get_data(
+            n_songs_train=1,
+            n_songs_val=1,
+            n_songs_test=1,
+            outputdir='./data/',
+            seed=None
+            )
+
     # Save the returned metadata
-    np.savez('./dat/metadata', train, val, test)
+    np.savez('./data/metadata', train, val, test)
 
     # Print the dimensions
     print "Data dimensions:"
@@ -326,9 +333,9 @@ def main(num_epochs=1):
 
     # Optionally, you could now dump the network weights to a file like this:
     timestr = str(time.time())
-    np.savez('model'+timestr+'.npz', *lasagne.layers.get_all_param_values(network))
-    np.save('train_error_hist'+timestr+'.npy', train_error_hist)
-    np.save('test_predictions'+timestr+'.npy', test_predictions)
+    np.savez('./data/model'+timestr+'.npz', *lasagne.layers.get_all_param_values(network))
+    np.save('./data/train_error_hist'+timestr+'.npy', train_error_hist)
+    np.save('./data/test_predictions'+timestr+'.npy', test_predictions)
     print "Wrote model to {0}, test error histogram to {1}, and test predictions to {2}".format(
         'model'+timestr+'.npz',
         'train_error_hist'+timestr+'.npy',
