@@ -60,3 +60,8 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Other non-essential stuff
+aws_notes/
+data/
+milestone/
