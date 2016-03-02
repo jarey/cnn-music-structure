@@ -51,10 +51,10 @@ def get_sids(datadir=DATADIR):
 def get_data(
         datadir=DATADIR,
         salamidir=SALAMIDIR,
-        n_songs_train=10,
-        n_songs_val=2,
-        n_songs_test=2,
-        outputdir='.',
+        n_songs_train=1,
+        n_songs_val=1,
+        n_songs_test=1,
+        outputdir='./data/',
         seed=None
     ):
     """
@@ -140,7 +140,22 @@ def get_data(
     test['audiodir'] = datadir
     test['datadir'] = outputdir
 
+    # Save the dicts for later
+    np.savez(
+        os.path.join(outputdir,'datadicts.npz'),
+        train=train,
+        val=val,
+        test=test
+        )
+
     return train, val, test
+
+def use_preparsed_data(outputdir='./data/'):
+    """
+    Give me some data that I already computed with get_data()!
+    """
+    npzfile = np.load(os.path.join(outputdir,'datadicts.npz'))
+    return npzfile['train'], npzfile['val'], npzfile['test']
 
 
 def serialize_data_chunk(
