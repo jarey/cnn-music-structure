@@ -9,15 +9,20 @@
 import os
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy import signal
 import librosa
 import util.evaluation as ev
+
+# Debug?
+DEBUG_PLOT = False
 
 # Set some params
 FS = 44100 # Enforce 44.1 kHz sample rate
 N_FFT = 2048
 HOP_LENGTH = N_FFT/2 # 50% overlap
-N_MFCC = 20
+N_MFCC = 13
+N_MEL = 128
 
 T_CONTEXT = 3 # seconds of context for our features
 N_FRAME_CONTEXT = librosa.time_to_frames(
@@ -27,8 +32,9 @@ N_FRAME_CONTEXT = librosa.time_to_frames(
 # 64 frames on either side, for context
 
 BOUNDARY_KERNEL = signal.gaussian(N_FRAME_CONTEXT, std=32) # For smoothing our y
+#BOUNDARY_KERNEL = np.ones(N_FRAME_CONTEXT)
 
-DTYPE='float32'
+DTYPE = 'float32'
 
 # FOR USE ON AMAZON EC2 AFTER COPYING FROM S3
 #DATADIR = os.path.abspath(os.path.join('/mnt','audio'))
@@ -54,7 +60,7 @@ def get_data(
         n_songs_train=1,
         n_songs_val=1,
         n_songs_test=1,
-        outputdir='./data/',
+        outputdir='/zap/tsob/audio/',
         seed=None
     ):
     """
@@ -94,36 +100,36 @@ def get_data(
 
     print "Getting training data"
     train['Xfile'], train['Xshape'], train['yfile'], train['yshape'], \
-            train['frame_start'] = serialize_data_chunk(
-        sids_train,
-        paths_train,
-        datadir=datadir,
-        salamidir=salamidir,
-        outputdir=outputdir,
-        prefix='train'
-        )
+        train['frame_start'] = serialize_data_chunk(
+            sids_train,
+            paths_train,
+            datadir=datadir,
+            salamidir=salamidir,
+            outputdir=outputdir,
+            prefix='train'
+            )
 
     print "Getting validation data"
     val['Xfile'], val['Xshape'], val['yfile'], val['yshape'], \
-            val['frame_start'] = serialize_data_chunk(
-        sids_val,
-        paths_val,
-        datadir=datadir,
-        salamidir=salamidir,
-        outputdir=outputdir,
-        prefix='val'
-        )
+        val['frame_start'] = serialize_data_chunk(
+            sids_val,
+            paths_val,
+            datadir=datadir,
+            salamidir=salamidir,
+            outputdir=outputdir,
+            prefix='val'
+            )
 
     print "Getting test data"
     test['Xfile'], test['Xshape'], test['yfile'], test['yshape'], \
-            test['frame_start'] = serialize_data_chunk(
-        sids_test,
-        paths_test,
-        datadir=datadir,
-        salamidir=salamidir,
-        outputdir=outputdir,
-        prefix='test'
-        )
+        test['frame_start'] = serialize_data_chunk(
+            sids_test,
+            paths_test,
+            datadir=datadir,
+            salamidir=salamidir,
+            outputdir=outputdir,
+            prefix='test'
+            )
 
     train['sids'] = sids_train
     train['paths'] = paths_train
@@ -150,7 +156,7 @@ def get_data(
 
     return train, val, test
 
-def use_preparsed_data(outputdir='./data/'):
+def use_preparsed_data(outputdir='/zap/tsob/audio/'):
     """
     Give me some data that I already computed with get_data()!
     """
@@ -194,8 +200,8 @@ def serialize_data_chunk(
 
     frame_start = [0]
 
-    X_shape = [0,1,N_MFCC,N_FRAME_CONTEXT]
-    y_shape = [0,1]
+    X_shape = [0, 1, N_MEL, N_FRAME_CONTEXT]
+    y_shape = [0, 1]
 
     # Get data song by song
     for i in xrange(len(sids)):
@@ -221,41 +227,59 @@ def serialize_data_chunk(
             FS
             )
 
-        # Get MFCC frames
-        sig_mfcc = librosa.feature.mfcc(
-            sig,
+        # Get feature frames
+        sig_feat = librosa.feature.melspectrogram(
+            y=sig,
             sr=fs,
-            n_mfcc=N_MFCC,
-            hop_length=HOP_LENGTH
+            n_fft=N_FFT,
+            hop_length=HOP_LENGTH,
+            n_mels=N_MEL,
+            fmax=1600
             )
+        sig_feat = 20.0*np.log10( sig_feat ) # convert to dB
+        sig_feat = sig_feat - np.max(sig_feat)
+
+        # debug plot
+        if(DEBUG_PLOT):
+            plt.figure()
+            plt.imshow(
+                sig_feat,
+                origin='lower',
+                interpolation='nearest',
+                aspect='auto'
+                )
+            plt.colorbar()
+            plt.show()
 
         # Keep track of the number of frames for this song
-        n_frames = sig_mfcc.shape[1]
+        n_frames = sig_feat.shape[1]
 
         y_shape[0] += n_frames # increment the shape of our final output y data
         X_shape[0] += n_frames # increment the shape of our final output y data
 
         # Pad the frames, so we can have frames centered at the very start and
         # end of the song.
-        sig_mfcc = np.hstack((
-            np.zeros((N_MFCC, N_FRAME_CONTEXT/2)),
-            sig_mfcc,
-            np.zeros((N_MFCC, N_FRAME_CONTEXT/2))
+        sig_feat = np.hstack((
+            np.zeros((N_MEL, N_FRAME_CONTEXT/2)),
+            sig_feat,
+            np.zeros((N_MEL, N_FRAME_CONTEXT/2))
             ))
 
         # Generate the boundary indicator
         y_path = os.path.abspath(os.path.join(outputdir, prefix + timestr + '_y'))
         yi = np.memmap(
-                y_path,
-                dtype=DTYPE,
-                mode='w+',
-                shape=(n_frames,1),
-                offset=offset_y
-                )
+            y_path,
+            dtype=DTYPE,
+            mode='w+',
+            shape=(n_frames, 1),
+            offset=offset_y
+            )
+        yi[:] = np.zeros((n_frames,1))[:] # start with zeros
         yi[np.minimum(times_frames,n_frames-1),0] = 1.0
 
         # Smooth y with the gaussian kernel
         yi[:,0] = np.convolve( yi[:,0], BOUNDARY_KERNEL, 'same')
+        yi[:,0] = np.minimum(yi[:,0],1.0) # nothing above 1
 
         # Generate the training data
         X_path = os.path.abspath(os.path.join(outputdir, prefix + timestr + '_X'))
@@ -263,7 +287,7 @@ def serialize_data_chunk(
                 X_path,
                 dtype=DTYPE,
                 mode='w+',
-                shape=(n_frames, 1, N_MFCC, N_FRAME_CONTEXT),
+                shape=(n_frames, 1, N_MEL, N_FRAME_CONTEXT),
                 offset=offset_X
                 )
 
@@ -272,10 +296,20 @@ def serialize_data_chunk(
             frame_start.append(frame_start[-1]+Xi.shape[0])
 
         for i_frame in xrange(n_frames):
-            Xi[i_frame,0] = sig_mfcc[:,i_frame:i_frame+N_FRAME_CONTEXT]
+            Xi[i_frame,0] = sig_feat[:,i_frame:i_frame+N_FRAME_CONTEXT]
 
         offset_X += Xi.size
         offset_y += yi.size
+
+        # debug plot
+        if(DEBUG_PLOT):
+            plt.figure()
+            plt.subplot(211)
+            plt.imshow(Xi[Xi.shape[0]/2,0])
+            plt.colorbar()
+            plt.subplot(212)
+            plt.plot(yi)
+            plt.show()
 
         # Flush our binary data to file, prepare for next song
         Xi.flush()
@@ -291,7 +325,7 @@ if __name__ == "__main__":
         n_songs_train=5,
         n_songs_val=2,
         n_songs_test=2,
-        outputdir='./dat/',
+        outputdir='/zap/tsob/audio/',
         seed=None
         )
     print train, val, test

@@ -7,6 +7,7 @@
 """
 
 # Usual imports
+import argparse
 import time
 import os
 import numpy as np
@@ -20,10 +21,6 @@ import lasagne
 # My modules
 from generate_data import get_data, use_preparsed_data
 
-def rel_error(x, y):
-    """ Returns relative error """
-    return np.max(np.abs(x - y) / (np.maximum(1e-8. np.abs(x) + np.abs(y))))
-
 def build_cnn(input_var=None):
     """
     Build the CNN architecture.
@@ -34,7 +31,7 @@ def build_cnn(input_var=None):
         shape=(
             None,
             1,
-            20,
+            128,
             129
             ),
         input_var=input_var
@@ -43,24 +40,24 @@ def build_cnn(input_var=None):
     # conv
     network = lasagne.layers.Conv2DLayer(
         lasagne.layers.batch_norm(network), # Batch norm on incoming
-        num_filters=16,    # Number of convolution filters to use
-        filter_size=(3, 3),
+        num_filters=32,    # Number of convolution filters to use
+        filter_size=(5, 5),
         stride=(1, 1),     # Stride fo (1,1)
         pad='same',        # Keep output size same as input
-        nonlinearity=lasagne.nonlinearities.rectify, # ReLU
+        nonlinearity=lasagne.nonlinearities.leaky_rectify, #rectify, # ReLU
         W=lasagne.init.GlorotUniform()   # W initialization
         )
 
     # conv
-    network = lasagne.layers.Conv2DLayer(
-        lasagne.layers.batch_norm(network), # Batch norm on incoming
-        num_filters=16,    # Number of convolution filters to use
-        filter_size=(3, 3),
-        stride=(1, 1),     # Stride fo (1,1)
-        pad='same',        # Keep output size same as input
-        nonlinearity=lasagne.nonlinearities.rectify, # ReLU
-        W=lasagne.init.GlorotUniform()   # W initialization
-        )
+    #network = lasagne.layers.Conv2DLayer(
+        #lasagne.layers.batch_norm(network), # Batch norm on incoming
+        #num_filters=32,    # Number of convolution filters to use
+        #filter_size=(5, 5),
+        #stride=(1, 1),     # Stride fo (1,1)
+        #pad='same',        # Keep output size same as input
+        #nonlinearity=lasagne.nonlinearities.leaky_rectify, #rectify, # ReLU
+        #W=lasagne.init.GlorotUniform()   # W initialization
+        #)
 
     # pool (2x2 max pool)
     network = lasagne.layers.MaxPool2DLayer(
@@ -70,24 +67,24 @@ def build_cnn(input_var=None):
     # conv
     network = lasagne.layers.Conv2DLayer(
         lasagne.layers.batch_norm(network), # Batch norm on incoming
-        num_filters=16,    # Number of convolution filters to use
+        num_filters=32,    # Number of convolution filters to use
         filter_size=(3, 3),
         stride=(1, 1),     # Stride fo (1,1)
         pad='same',        # Keep output size same as input
-        nonlinearity=lasagne.nonlinearities.rectify, # ReLU
+        nonlinearity=lasagne.nonlinearities.leaky_rectify, #rectify, # ReLU
         W=lasagne.init.GlorotUniform()   # W initialization
         )
 
     # conv
-    network = lasagne.layers.Conv2DLayer(
-        lasagne.layers.batch_norm(network), # Batch norm on incoming
-        num_filters=16,    # Number of convolution filters to use
-        filter_size=(3, 3),
-        stride=(1, 1),     # Stride fo (1,1)
-        pad='same',        # Keep output size same as input
-        nonlinearity=lasagne.nonlinearities.rectify, # ReLU
-        W=lasagne.init.GlorotUniform()   # W initialization
-        )
+    #network = lasagne.layers.Conv2DLayer(
+        #lasagne.layers.batch_norm(network), # Batch norm on incoming
+        #num_filters=32,    # Number of convolution filters to use
+        #filter_size=(3, 3),
+        #stride=(1, 1),     # Stride fo (1,1)
+        #pad='same',        # Keep output size same as input
+        #nonlinearity=lasagne.nonlinearities.leaky_rectify, #rectify, # ReLU
+        #W=lasagne.init.GlorotUniform()   # W initialization
+        #)
 
     # pool (2x2 max pool)
     network = lasagne.layers.MaxPool2DLayer(
@@ -97,8 +94,8 @@ def build_cnn(input_var=None):
     # Fully-connected layer of 256 units with 50% dropout on its inputs
     network = lasagne.layers.DenseLayer(
         lasagne.layers.dropout(network, p=.5),
-        num_units=128,
-        nonlinearity=lasagne.nonlinearities.rectify,
+        num_units=256,
+        nonlinearity=lasagne.nonlinearities.leaky_rectify, #rectify, # ReLU
         W=lasagne.init.HeUniform()   # W initialization
         )
 
@@ -106,7 +103,7 @@ def build_cnn(input_var=None):
     network = lasagne.layers.DenseLayer(
         network,
         num_units=1,
-        nonlinearity=lasagne.nonlinearities.softmax
+        nonlinearity=lasagne.nonlinearities.sigmoid
         )
 
     return network
@@ -127,11 +124,15 @@ def iterate_minibatches(datadict, batchsize, shuffle=False):
 
     n_total = datadict['Xshape'][0] # Total number of data points
 
-    Xpath = os.path.abspath(os.path.join(datadict['datadir'],datadict['Xfile']))
-    ypath = os.path.abspath(os.path.join(datadict['datadir'],datadict['yfile']))
+    x_path = os.path.abspath(
+        os.path.join(datadict['datadir'], datadict['Xfile'])
+        )
+    y_path = os.path.abspath(
+        os.path.join(datadict['datadir'], datadict['yfile'])
+        )
 
-    Xshape = datadict['Xshape']
-    offsetmul = Xshape[1] * Xshape[2] * Xshape[3]
+    x_shape = datadict['Xshape']
+    offsetmul = x_shape[1] * x_shape[2] * x_shape[3]
 
     if shuffle:
         indices = np.arange(batchsize)
@@ -139,14 +140,14 @@ def iterate_minibatches(datadict, batchsize, shuffle=False):
 
     for start_idx in range(0, n_total - batchsize + 1, batchsize):
         inputs = np.memmap(
-            Xpath,
+            x_path,
             dtype='float32',
             mode='r',
-            shape=(batchsize, Xshape[1], Xshape[2], Xshape[3]),
+            shape=(batchsize, x_shape[1], x_shape[2], x_shape[3]),
             offset=start_idx*offsetmul
             )
         targets = np.memmap(
-            ypath,
+            y_path,
             dtype='float32',
             mode='r',
             shape=(batchsize, 1),
@@ -159,7 +160,14 @@ def iterate_minibatches(datadict, batchsize, shuffle=False):
             excerpt = slice(0, batchsize)
         yield inputs[excerpt], targets[excerpt]
 
-def main(num_epochs=1):
+def main(
+        num_epochs=1,
+        n_songs_train=1,
+        n_songs_val=1,
+        n_songs_test=1,
+        batch_size=256,
+        learning_rate=1e-4
+    ):
     """
     Main function
     """
@@ -170,19 +178,19 @@ def main(num_epochs=1):
     train, val, test = None, None, None
     try:
         train, val, test = use_preparsed_data(
-            outputdir='./data/',
+            outputdir='/zap/tsob/audio/',
             )
     except:
         train, val, test = get_data(
-            n_songs_train=1,
-            n_songs_val=1,
-            n_songs_test=1,
-            outputdir='./data/',
+            n_songs_train=n_songs_train,
+            n_songs_val=n_songs_val,
+            n_songs_test=n_songs_test,
+            outputdir='/zap/tsob/audio/',
             seed=None
             )
 
     # Save the returned metadata
-    np.savez('./data/metadata', train, val, test)
+    np.savez('/zap/tsob/audio/metadata', train, val, test)
 
     # Print the dimensions
     print "Data dimensions:"
@@ -192,11 +200,11 @@ def main(num_epochs=1):
         print datapt
 
     # Parse dimensions
-    n_train  = train['yshape'][0]
-    n_val    = val[  'yshape'][0]
-    n_test   = test[ 'yshape'][0]
-    n_chan   = train['Xshape'][1]
-    n_feats  = train['Xshape'][2]
+    n_train = train['yshape'][0]
+    n_val = val['yshape'][0]
+    n_test = test['yshape'][0]
+    n_chan = train['Xshape'][1]
+    n_feats = train['Xshape'][2]
     n_frames = train['Xshape'][3]
 
     print "n_train  = {0}".format(n_train)
@@ -207,8 +215,8 @@ def main(num_epochs=1):
     print "n_frames = {0}".format(n_frames)
 
     # Prepare Theano variables for inputs and targets
-    input_var  = T.tensor4( name='inputs' )
-    target_var = T.fcol( name='targets' )
+    input_var = T.tensor4(name='inputs')
+    target_var = T.fcol(name='targets')
 
     # Create neural network model (depending on first command line parameter)
     print("Building model and compiling functions..."),
@@ -217,7 +225,7 @@ def main(num_epochs=1):
 
     # Create a loss expression for training, i.e., a scalar objective we want to minimize
     prediction = lasagne.layers.get_output(network)
-    loss = lasagne.objectives.squared_error(prediction, target_var)
+    loss = lasagne.objectives.binary_hinge_loss(prediction, target_var)
     loss = loss.mean()
 
     # Create update expressions for training
@@ -229,7 +237,10 @@ def main(num_epochs=1):
     updates = lasagne.updates.adam(
         loss,
         params,
-        learning_rate=1e-3
+        learning_rate=learning_rate,
+        beta1=0.95,
+        beta2=0.999,
+        epsilon=1e-08
     )
 
     # Create a loss expression for validation/testing.
@@ -237,7 +248,7 @@ def main(num_epochs=1):
     # through the network, disabling dropout layers.
     test_prediction = lasagne.layers.get_output(network, deterministic=True)
 
-    test_loss = lasagne.objectives.squared_error(
+    test_loss = lasagne.objectives.binary_hinge_loss(
         test_prediction,
         target_var
         )
@@ -286,7 +297,7 @@ def main(num_epochs=1):
         start_time = time.time()
 
         for batch in iterate_minibatches(
-            train, 500, shuffle=True
+            train, batch_size, shuffle=True
             ):
             inputs, targets = batch
             train_err_increment = train_fn(inputs, targets)
@@ -298,7 +309,7 @@ def main(num_epochs=1):
         val_err = 0
         val_acc = 0
         val_batches = 0
-        for batch in iterate_minibatches(val, 500, shuffle=False):
+        for batch in iterate_minibatches(val, batch_size, shuffle=False):
             inputs, targets = batch
             err, acc = val_fn(inputs, targets)
             val_err += err
@@ -308,8 +319,8 @@ def main(num_epochs=1):
         # Then we print the results for this epoch:
         print("Epoch {} of {} took {:.3f}s".format(
             epoch + 1, num_epochs, time.time() - start_time))
-        print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
-        print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
+        print("  training loss:\t\t{:.8f}".format(train_err / train_batches))
+        print("  validation loss:\t\t{:.8f}".format(val_err / val_batches))
         print("  validation accuracy:\t\t{:.2f} %".format(
             val_acc / val_batches * 100))
     print("Done training.")
@@ -319,7 +330,7 @@ def main(num_epochs=1):
     test_acc = 0
     test_batches = 0
     test_predictions = []
-    for batch in iterate_minibatches(test, 500, shuffle=False):
+    for batch in iterate_minibatches(test, batch_size, shuffle=False):
         inputs, targets = batch
         err, acc = val_fn(inputs, targets)
         test_predictions.append( test_pred_fn(inputs) )
@@ -333,9 +344,9 @@ def main(num_epochs=1):
 
     # Optionally, you could now dump the network weights to a file like this:
     timestr = str(time.time())
-    np.savez('./data/model'+timestr+'.npz', *lasagne.layers.get_all_param_values(network))
-    np.save('./data/train_error_hist'+timestr+'.npy', train_error_hist)
-    np.save('./data/test_predictions'+timestr+'.npy', test_predictions)
+    np.savez('/zap/tsob/audio/model'+timestr+'.npz', *lasagne.layers.get_all_param_values(network))
+    np.save('/zap/tsob/audio/train_error_hist'+timestr+'.npy', train_error_hist)
+    np.save('/zap/tsob/audio/test_predictions'+timestr+'.npy', test_predictions)
     print "Wrote model to {0}, test error histogram to {1}, and test predictions to {2}".format(
         'model'+timestr+'.npz',
         'train_error_hist'+timestr+'.npy',
@@ -350,11 +361,53 @@ def main(num_epochs=1):
 
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description='Run a CNN for music structure segmentation.')
-    parser.add_argument('-e','--epochs',
+    P = argparse.ArgumentParser(
+        description='Run a CNN for music structure segmentation.'
+        )
+    P.add_argument(
+        '-t', '--train',
+        help='Number of songs to include in training set.',
+        required=False,
+        default=20
+        )
+    P.add_argument(
+        '-v', '--val',
+        help='Number of songs to include in validation set.',
+        required=False,
+        default=3
+        )
+    P.add_argument(
+        '-s', '--test',
+        help='Number of songs to include in test set.',
+        required=False,
+        default=5
+        )
+    P.add_argument(
+        '-e', '--epochs',
         help='Number of epochs to run.',
-        required=False, default=1)
-    args = parser.parse_args()
-    main(num_epochs=int(args.epochs))
+        required=False,
+        default=1
+        )
+    P.add_argument(
+        '-l', '--learningrate',
+        help='Learning rate, for update.',
+        required=False,
+        default=1e-3
+        )
+    P.add_argument(
+        '-b', '--batchsize',
+        help='Batch size.',
+        required=False,
+        default=256
+        )
+    ARGS = P.parse_args()
 
+    # Start the show
+    main(
+        num_epochs=int(ARGS.epochs),
+        n_songs_train=int(ARGS.train),
+        n_songs_val=int(ARGS.val),
+        n_songs_test=int(ARGS.test),
+        learning_rate=float(ARGS.learningrate),
+        batch_size=int(ARGS.batchsize)
+        )
