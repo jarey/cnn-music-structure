@@ -65,3 +65,6 @@ target/
 aws_notes/
 data/
 milestone/
+
+# Vim
+*.swp
