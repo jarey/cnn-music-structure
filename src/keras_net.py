@@ -128,9 +128,6 @@ def main(
     for datadict in [train, val, test]:
         print '\t', datadict['Xshape'], '\t', datadict['yshape']
 
-    print "Shape of data:"
-    print "Train:  ", X_train.shape, "\t", y_train.shape
-
 
     # CNN MODEL ###############################################################
     # VGG-like convnet, from Keras examples, http://keras.io/examples/
