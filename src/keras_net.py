@@ -213,10 +213,10 @@ def main(
 
     hist = model.fit_generator(
         iterate_minibatches(train, batch_size, shuffle=True),
-        train['Xshape'][0]/2, # samples per epoch - half the train set
+        train['Xshape'][0], # samples per epoch
         num_epochs,
         callbacks=[checkpointer, history],
-        validation_data = iterate_minibatches(val, batch_size, shuffle=True),
+        # validation_data = iterate_minibatches(val, batch_size, shuffle=True),
         # nb_val_samples = val['Xshape'][0],
         nb_worker=3,
         # nb_val_worker=3
