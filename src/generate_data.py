@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import librosa
 import util.evaluation as ev
+import util.datapaths as dpath
 
 # Debug?
 DEBUG_PLOT = False
@@ -23,6 +24,8 @@ N_FFT = 2048
 HOP_LENGTH = N_FFT/2 # 50% overlap
 N_MFCC = 13
 N_MEL = 128
+
+DB_LOW = -250.0 # silence in dB
 
 T_CONTEXT = 3 # seconds of context for our features
 N_FRAME_CONTEXT = librosa.time_to_frames(
@@ -223,7 +226,7 @@ def serialize_data_chunk(
 
         # Get signal
         sig, fs = librosa.load(
-            os.path.join(DATADIR, paths[i]),
+            os.path.join(datadir, paths[i]),
             FS
             )
 
@@ -238,6 +241,7 @@ def serialize_data_chunk(
             )
         sig_feat = 20.0*np.log10( sig_feat ) # convert to dB
         sig_feat = sig_feat - np.max(sig_feat)
+        sig_feat[sig_feat==-np.inf] = DB_LOW # screen out inf
 
         # debug plot
         if(DEBUG_PLOT):
@@ -260,9 +264,9 @@ def serialize_data_chunk(
         # Pad the frames, so we can have frames centered at the very start and
         # end of the song.
         sig_feat = np.hstack((
-            np.zeros((N_MEL, N_FRAME_CONTEXT/2)),
+            np.ones((N_MEL, N_FRAME_CONTEXT/2)) * DB_LOW,
             sig_feat,
-            np.zeros((N_MEL, N_FRAME_CONTEXT/2))
+            np.ones((N_MEL, N_FRAME_CONTEXT/2)) * DB_LOW
             ))
 
         # Generate the boundary indicator
