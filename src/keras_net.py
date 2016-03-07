@@ -216,7 +216,7 @@ def main(
         train['Xshape'][0]/2, # samples per epoch - half the train set
         num_epochs,
         callbacks=[checkpointer, history],
-        validation_data = iterate_minibatches(val, batchsize, shuffle=True),
+        validation_data = iterate_minibatches(val, batch_size, shuffle=True),
         nb_val_samples = val['Xshape'][0],
         nb_worker=3,
         nb_val_worker=3
