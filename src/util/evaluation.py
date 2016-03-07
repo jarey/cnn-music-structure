@@ -46,22 +46,22 @@ def id2filenames(sid, ann_type="uppercase", salamipath=dpath.SALAMI):
             files[i] = os.path.join(spath, files[i])
     return files
 
-def id2annotations(sid, ann_type="uppercase", salamipath=None):
+def id2annotations(sid, ann_type="uppercase", salamipath=dpath.SALAMI):
     """
     Given a SALAMI id number, return the annotations in a dictionary.
     """
-    files = id2filenames(sid, ann_type=ann_type, salamipath=dpath.SALAMI)
+    files = id2filenames(sid, ann_type=ann_type, salamipath=salamipath)
     annotations = {}
     for i in range(len(files)):
         annotations[os.path.basename(files[i])] = load_salami(files[i])
     return annotations
 
-def id2segtimes(sid, ann_type="uppercase", salamipath=None):
+def id2segtimes(sid, ann_type="uppercase", salamipath=dpath.SALAMI):
     """
     Given a SALAMI id number, return the annotated segmentation
     times.
     """
-    files = id2filenames(sid, ann_type=ann_type, salamipath=dpath.SALAMI)
+    files = id2filenames(sid, ann_type=ann_type, salamipath=salamipath)
     times = []
     for i in range(len(files)):
         events, _ = mir_eval.io.load_labeled_events(files[i])
