@@ -209,6 +209,8 @@ def main(
         save_best_only=True
         )
 
+    history = LossHistory()
+
     hist = model.fit_generator(
         iterate_minibatches(train, batch_size, shuffle=True),
         train['Xshape'][0]/2, # samples per epoch - half the train set
