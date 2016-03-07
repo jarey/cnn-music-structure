@@ -217,7 +217,7 @@ def main(
         num_epochs,
         callbacks=[checkpointer, history],
         validation_data = iterate_minibatches(val, batch_size, shuffle=True),
-        nb_val_samples = val['Xshape'][0],
+        # nb_val_samples = val['Xshape'][0],
         nb_worker=3,
         nb_val_worker=3
         )
