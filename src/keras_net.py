@@ -257,6 +257,7 @@ def main(
     history = LossHistory()
 
 
+    # Instantiate batch generators, so we don't have to have all data in memory
     train_batch_gen = DataGenerator(
         train,
         batch_size=batch_size,
@@ -264,15 +265,21 @@ def main(
         seed=None
         )
 
+    val_batch_gen = DataGenerator(
+        val,
+        batch_size=batch_size,
+        shuffle=False
+        )
+
     hist = model.fit_generator(
         train_batch_gen,
         min(TRAIN_CAP, train['Xshape'][0]), # samples per epoch
         num_epochs,
         callbacks=[checkpointer, history],
-        # validation_data = iterate_minibatches(val, batch_size, shuffle=True),
-        # nb_val_samples = val['Xshape'][0],
+        validation_data = val_batch_gen,
+        nb_val_samples = min(TRAIN_CAP, val['Xshape'][0]),
         nb_worker=3,
-        # nb_val_worker=3
+        nb_val_worker=3
         )
 
     print "Fit history"
