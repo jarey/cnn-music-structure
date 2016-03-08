@@ -12,6 +12,9 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+#
+import threading
+
 # Import keras
 import keras
 from keras.models import Sequential
@@ -36,62 +39,87 @@ class LossHistory(keras.callbacks.Callback):
 
 TRAIN_CAP = None
 
-def iterate_minibatches(datadict, batchsize, shuffle=False):
-    """
-    Generate a minibatch.
-    Arguments: datadict  (dictionary, e.g. an output of get_data()
-                          in generate_data.py)
-               batchsize (int)
-               shuffle   (bool, default=False)
-    Returns:   inputs[excerpt], targets[excerpt]
-    """
+class ImageDataGenerator(object):
+    '''
+    Generate minibatches from serialized data.
+    '''
+    def __init__(self, datadict, batch_size=32, shuffle=False, seed=None):
+        self.lock = threading.Lock()
+        self.data       = datadict
+        self.batch_size = batch_size
+        self.shuffle    = shuffle
+        self.seed       = seed
 
-
-    assert datadict['Xshape'][0] == datadict['yshape'][0]
-
-    n_total = datadict['Xshape'][0] # Total number of data points
-
-    if TRAIN_CAP:
-        n_total = min(TRAIN_CAP, n_total)
-
-    x_path = os.path.abspath(
-        os.path.join(datadict['datadir'], datadict['Xfile'])
-        )
-    y_path = os.path.abspath(
-        os.path.join(datadict['datadir'], datadict['yfile'])
-        )
-
-    x_shape = datadict['Xshape']
-    offsetmul = x_shape[1] * x_shape[2] * x_shape[3]
-
-    if shuffle:
-        indices = np.arange(batchsize)
-        np.random.shuffle(indices)
-
-    for start_idx in range(0, n_total - batchsize + 1, batchsize):
-
-        thisbatchsize = min(n_total-start_idx, batchsize)
-
-        inputs = np.memmap(
+    def next(self):
+        # for python 2.x
+        # Keep under lock only the mechainsem which advance the indexing of each batch
+        # see # http://anandology.com/blog/using-iterators-and-generators/
+        with self.lock:
+            index_array, current_index, current_batch_size = next(self.flow_generator)
+        # The transformation of images is not under thread lock so it can be done in parallel
+        offsetmul = this.datadict['Xshape'][1] * this.datadict['Xshape'][2] * this.datadict['Xshape'][3]
+        x_path = os.path.abspath(
+            os.path.join(this.datadict['datadir'], this.datadict['Xfile'])
+            )
+        y_path = os.path.abspath(
+            os.path.join(this.datadict['datadir'], this.datadict['yfile'])
+            )
+        bX = np.memmap(
             x_path,
             dtype='float32',
-            mode='r+',
-            shape=(thisbatchsize, x_shape[1], x_shape[2], x_shape[3]),
-            offset=start_idx*offsetmul
+            mode='r',
+            shape=(current_batch_size, this.datadict['Xshape'][1], this.datadict['Xshape'][2], this.datadict['Xshape'][3]),
+            offset=current_index*offsetmul
             )
-        targets = np.memmap(
+        bY = np.memmap(
             y_path,
             dtype='float32',
-            mode='r+',
-            shape=(thisbatchsize, 1),
-            offset=start_idx
+            mode='r',
+            shape=(current_batch_size, 1),
+            offset=current_index
             )
+        return bX, bY
 
-        if shuffle:
-            excerpt = indices[0:thisbatchsize]
-        else:
-            excerpt = slice(0, thisbatchsize)
-        yield inputs[excerpt], targets[excerpt]
+    def flow(self, datadict, batch_size=32, shuffle=False, seed=None,
+             save_to_dir=None, save_prefix="", save_format="jpeg"):
+        assert datadict['Xshape'] == datadict['yshape']
+        self.save_to_dir = save_to_dir
+        self.save_prefix = save_prefix
+        self.save_format = save_format
+        self.flow_generator = self._flow_index(datadict['Xshape'][0], batch_size, shuffle, seed)
+        return self
+
+    def _flow_index(self, N, batch_size=32, shuffle=False, seed=None):
+
+        # Check cap
+        if TRAIN_CAP:
+            N = min(N, TRAIN_CAP)
+
+        b = 0
+        total_b = 0
+        while 1:
+            if b == 0:
+                if seed is not None:
+                    np.random.seed(seed + total_b)
+
+                if shuffle:
+                    index_array = np.random.permutation(N)
+                else:
+                    index_array = np.arange(N)
+
+            current_index = (b * batch_size) % N
+            if N >= current_index + batch_size:
+                current_batch_size = batch_size
+            else:
+                current_batch_size = N - current_index
+
+            if current_batch_size == batch_size:
+                b += 1
+            else:
+                b = 0
+            total_b += 1
+            yield index_array[current_index: current_index + current_batch_size], current_index, current_batch_size
+
 
 
 def main(
