@@ -39,7 +39,7 @@ class LossHistory(keras.callbacks.Callback):
 
 TRAIN_CAP = None
 
-class ImageDataGenerator(object):
+class DataGenerator(object):
     '''
     Generate minibatches from serialized data.
     '''
@@ -247,8 +247,16 @@ def main(
 
     history = LossHistory()
 
+
+    train_batch_gen = DataGenerator(
+        train,
+        batch_size=batch_size,
+        shuffle=True,
+        seed=None
+        )
+
     hist = model.fit_generator(
-        iterate_minibatches(train, batch_size, shuffle=True),
+        train_batch_gen,
         min(TRAIN_CAP, train['Xshape'][0]), # samples per epoch
         num_epochs,
         callbacks=[checkpointer, history],
