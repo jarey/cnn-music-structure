@@ -218,7 +218,7 @@ def main(
 
     hist = model.fit_generator(
         iterate_minibatches(train, batch_size, shuffle=True),
-        train['Xshape'][0], # samples per epoch
+        min(TRAIN_CAP, train['Xshape'][0]), # samples per epoch
         num_epochs,
         callbacks=[checkpointer, history],
         # validation_data = iterate_minibatches(val, batch_size, shuffle=True),
