@@ -10,6 +10,7 @@ import argparse
 import os
 import sys
 import time
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -315,7 +316,43 @@ def main(
         bbox_inches='tight'
         )
 
+    # TEST MODEL ###############################################################
+    test_batch_gen = DataGenerator(
+        test,
+        batch_size=batch_size,
+        shuffle=False,
+        seed=None
+        )
+
+    y_pred = np.zeros(tuple(test['yshape']))
+    y_true = np.zeros(tuple(test['yshape']))
+    i_start = 0
+    for iBatch in xrange(math.ceil(test['yshape'][0]/float(batch_size))):
+        bX, by = test_batch_gen.next()
+        n_batch = bX.shape[0]
+        y_pred[i_start:i_start+n_batch,0] = model.predict_on_batch(bX)
+        y_true[i_start:i_start+n_batch,0] = by[:]
+        iStart += n_batch
+
+    plt.figure(3)
+    plt.plot(y_pred, label="Prediction")
+    plt.plot(y_true, label="Ground truth")
+    plt.grid()
+    plt.legend()
+    plt.savefig(
+        os.path.abspath(os.path.join(outputdir, 'test.pdf')),
+        bbox_inches='tight'
+        )
+
     plt.show()
+
+    np.savez(
+        os.path.abspath(os.path.join(outputdir, 'train_pred.npz')),
+        train=train,
+        y_pred=y_pred,
+        y_true=y_true
+        )
+
 
 
 if __name__ == "__main__":
