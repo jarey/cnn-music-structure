@@ -327,12 +327,12 @@ def main(
     y_pred = np.zeros(tuple(test['yshape']))
     y_true = np.zeros(tuple(test['yshape']))
     i_start = 0
-    for iBatch in xrange(math.ceil(test['yshape'][0]/float(batch_size))):
+    for iBatch in xrange(int(math.ceil(test['yshape'][0]/float(batch_size)))):
         bX, by = test_batch_gen.next()
         n_batch = bX.shape[0]
-        y_pred[i_start:i_start+n_batch,0] = model.predict_on_batch(bX)
-        y_true[i_start:i_start+n_batch,0] = by[:]
-        iStart += n_batch
+        y_pred[i_start:i_start+n_batch] = np.array(model.predict_on_batch(bX))
+        y_true[i_start:i_start+n_batch] = by[:]
+        i_start += n_batch
 
     plt.figure(3)
     plt.plot(y_pred, label="Prediction")
