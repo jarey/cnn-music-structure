@@ -31,6 +31,9 @@ import generate_data # my data generation function
 
 # Callback for loss history
 class LossHistory(keras.callbacks.Callback):
+    """
+    Keeps track of loss history during training, for each minibatch
+    """
     def on_train_begin(self, logs={}):
         self.losses = []
 
@@ -287,7 +290,7 @@ def main(
     print hist.history
 
     # SAVE SOME PLOTS
-    plt.figure()
+    plt.figure(1)
     plt.plot(history.losses)
     plt.xlabel('Minibatch')
     plt.ylabel('Loss')
@@ -296,6 +299,18 @@ def main(
         os.path.abspath(os.path.join(outputdir, 'loss_history_train.pdf')),
         bbox_inches='tight'
         )
+
+    plt.figure(2)
+    plt.plot(hist['loss'], label="Training loss")
+    plt.plot(hist['val_loss'], label="Validation loss")
+    plt.legend()
+    plt.savefig(
+        os.path.abspath(os.path.join(outputdir, 'loss_history_epoch_val_train.pdf')),
+        bbox_inches='tight'
+        )
+
+    plt.show()
+
 
 if __name__ == "__main__":
     P = argparse.ArgumentParser(
