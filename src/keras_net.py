@@ -72,14 +72,14 @@ def iterate_minibatches(datadict, batchsize, shuffle=False):
         inputs = np.memmap(
             x_path,
             dtype='float32',
-            mode='r',
+            mode='r+',
             shape=(batchsize, x_shape[1], x_shape[2], x_shape[3]),
             offset=start_idx*offsetmul
             )
         targets = np.memmap(
             y_path,
             dtype='float32',
-            mode='r',
+            mode='r+',
             shape=(batchsize, 1),
             offset=start_idx
             )
