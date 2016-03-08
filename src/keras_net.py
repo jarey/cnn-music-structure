@@ -91,7 +91,7 @@ class DataGenerator(object):
 
     def flow(self, datadict, batch_size=32, shuffle=False, seed=None,
              save_to_dir=None, save_prefix="", save_format="jpeg"):
-        assert datadict['Xshape'] == datadict['yshape']
+        assert datadict['Xshape'][0] == datadict['yshape'][0]
         self.save_to_dir = save_to_dir
         self.save_prefix = save_prefix
         self.save_format = save_format
