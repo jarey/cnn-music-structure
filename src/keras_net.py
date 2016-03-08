@@ -153,7 +153,7 @@ def main(
     try:
         # Try to load data, if we already serialized it and have a
         # datadicts.npz file available
-        train, val, test = use_preparsed_data(
+        train, val, test = generate_data.use_preparsed_data(
             outputdir=outputdir
             )
     except:
