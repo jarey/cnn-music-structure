@@ -290,7 +290,7 @@ def main(
     np.savez(
         os.path.abspath(os.path.join(outputdir, 'train_history.npz')),
         loss=hist.history['loss'],
-        loss_per_minibatch=history.lossses,
+        loss_per_minibatch=history.losses,
         val_loss=hist.history['val_loss']
         )
 
