@@ -324,11 +324,16 @@ def main(
         seed=None
         )
 
-    n_batches = int(math.ceil(test['yshape'][0]/float(batch_size)))
+    if TRAIN_CAP:
+        test_len = min(test['yshape'][0], TRAIN_CAP)
+    else:
+        test_len = test['yshape'][0]
+
+    n_batches = int(math.ceil(test_len/float(batch_size)))
     y_pred = np.zeros((n_batches*batch_size, 1))
     y_true = np.zeros((n_batches*batch_size, 1))
     i_start = 0
-    
+
     print "Testing",
     for iBatch in xrange(n_batches):
         bX, by = test_batch_gen.next()
