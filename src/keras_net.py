@@ -8,6 +8,7 @@
 
 import argparse
 import os
+import sys
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -364,11 +365,13 @@ if __name__ == "__main__":
         '-c', '--traincap',
         help='Maximum number of training examples.',
         required=False,
-        default=None
+        default=sys.maxint
         )
 
     ARGS = P.parse_args()
     TRAIN_CAP = int(ARGS.traincap)
+    if TRAIN_CAP == sys.maxint:
+        TRAIN_CAP == None
 
     # Start the show
     main(
