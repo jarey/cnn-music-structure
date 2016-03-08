@@ -66,18 +66,18 @@ class DataGenerator(object):
         with self.lock:
             index_array, current_index, current_batch_size = next(self.flow_generator)
         # The transformation of images is not under thread lock so it can be done in parallel
-        offsetmul = self.datadict['Xshape'][1] * self.datadict['Xshape'][2] * self.datadict['Xshape'][3]
+        offsetmul = self.data['Xshape'][1] * self.data['Xshape'][2] * self.data['Xshape'][3]
         x_path = os.path.abspath(
-            os.path.join(self.datadict['datadir'], self.datadict['Xfile'])
+            os.path.join(self.data['datadir'], self.data['Xfile'])
             )
         y_path = os.path.abspath(
-            os.path.join(self.datadict['datadir'], self.datadict['yfile'])
+            os.path.join(self.data['datadir'], self.data['yfile'])
             )
         bX = np.memmap(
             x_path,
             dtype='float32',
             mode='r',
-            shape=(current_batch_size, self.datadict['Xshape'][1], self.datadict['Xshape'][2], self.datadict['Xshape'][3]),
+            shape=(current_batch_size, self.data['Xshape'][1], self.data['Xshape'][2], self.data['Xshape'][3]),
             offset=current_index*offsetmul
             )
         bY = np.memmap(
