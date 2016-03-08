@@ -52,7 +52,7 @@ class DataGenerator(object):
         self.seed       = seed
         self = self.flow(
             datadict,
-            batch_size=32,
+            batch_size=batch_size,
             shuffle=False,
             seed=None,
             save_to_dir=None,
