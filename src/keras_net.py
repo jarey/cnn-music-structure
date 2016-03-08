@@ -49,6 +49,15 @@ class DataGenerator(object):
         self.batch_size = batch_size
         self.shuffle    = shuffle
         self.seed       = seed
+        self = self.flow(
+            datadict,
+            batch_size=32,
+            shuffle=False,
+            seed=None,
+            save_to_dir=None,
+            save_prefix="",
+            save_format="jpeg")
+
 
     def next(self):
         # for python 2.x
