@@ -34,6 +34,8 @@ class LossHistory(keras.callbacks.Callback):
         self.losses.append(logs.get('loss'))
 
 
+TRAIN_CAP = None
+
 def iterate_minibatches(datadict, batchsize, shuffle=False):
     """
     Generate a minibatch.
@@ -48,6 +50,9 @@ def iterate_minibatches(datadict, batchsize, shuffle=False):
     assert datadict['Xshape'][0] == datadict['yshape'][0]
 
     n_total = datadict['Xshape'][0] # Total number of data points
+
+    if TRAIN_CAP:
+        n_total = min(TRAIN_CAP, n_total)
 
     x_path = os.path.abspath(
         os.path.join(datadict['datadir'], datadict['Xfile'])
@@ -300,8 +305,15 @@ if __name__ == "__main__":
         required=False,
         default=0.01
         )
+    P.add_argument(
+        '-c', '--traincap',
+        help='Maximum number of training examples.',
+        required=False,
+        default=None
+        )
 
     ARGS = P.parse_args()
+    TRAIN_CAP = int(ARGS.traincap)
 
     # Start the show
     main(
