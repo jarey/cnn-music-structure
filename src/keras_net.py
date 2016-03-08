@@ -69,25 +69,28 @@ def iterate_minibatches(datadict, batchsize, shuffle=False):
         np.random.shuffle(indices)
 
     for start_idx in range(0, n_total - batchsize + 1, batchsize):
+
+        thisbatchsize = min(n_total-start_idx, batchsize)
+
         inputs = np.memmap(
             x_path,
             dtype='float32',
             mode='r+',
-            shape=(batchsize, x_shape[1], x_shape[2], x_shape[3]),
+            shape=(thisbatchsize, x_shape[1], x_shape[2], x_shape[3]),
             offset=start_idx*offsetmul
             )
         targets = np.memmap(
             y_path,
             dtype='float32',
             mode='r+',
-            shape=(batchsize, 1),
+            shape=(thisbatchsize, 1),
             offset=start_idx
             )
 
         if shuffle:
-            excerpt = indices[0:batchsize]
+            excerpt = indices[0:thisbatchsize]
         else:
-            excerpt = slice(0, batchsize)
+            excerpt = slice(0, thisbatchsize)
         yield inputs[excerpt], targets[excerpt]
 
 
