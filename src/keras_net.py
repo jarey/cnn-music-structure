@@ -286,12 +286,11 @@ def main(
         nb_val_worker=3
         )
 
-    print "Fit history"
-    print hist.history
-
-    np.save(
-        os.path.abspath(os.path.join(outputdir, 'hist_per_epoch.npy')),
-        hist
+    np.savez(
+        os.path.abspath(os.path.join(outputdir, 'train_history.npz')),
+        loss=hist.history['loss'],
+        loss_per_minibatch=history.lossses,
+        val_loss=hist.history['val_loss']
         )
 
     # SAVE SOME PLOTS
@@ -308,6 +307,8 @@ def main(
     plt.figure(2)
     plt.plot(hist.history['loss'], label="Training loss")
     plt.plot(hist.history['val_loss'], label="Validation loss")
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
     plt.legend()
     plt.savefig(
         os.path.abspath(os.path.join(outputdir, 'loss_history_epoch_val_train.pdf')),
