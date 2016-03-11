@@ -136,178 +136,219 @@ class DataGenerator(object):
         return bX, bY
 
 def main(
-        datadict_train,
-        datadict_val,
-        datadict_test,
-        num_epochs=1,
-        batch_size=128,
-        learning_rate=1e-4,
-        datadir=os.path.abspath('../salami-audio/'),
-        salamidir=os.path.abspath('../salami-data-public/'),
-        outputdir=os.path.abspath('./bindata/'),
-        reg_amount=0.01
-    ):
-    """
-    Main function
-    """
+		datadict_train,
+		datadict_val,
+		datadict_test,
+		num_epochs=1,
+		batch_size=128,
+		learning_rate=1e-4,
+		datadir=os.path.abspath('../salami-audio/'),
+		salamidir=os.path.abspath('../salami-data-public/'),
+		outputdir=os.path.abspath('./bindata/'),
+		reg_amount=0.01
+	):
+	"""
+	Main function
+	"""
 
-    # CNN MODEL ###############################################################
-    # VGG-like convnet, from Keras examples, http://keras.io/examples/
-    model = Sequential()
-    model.add(Convolution2D(
-        16, 3, 3,
-        border_mode='valid',
-        input_shape=(1, 128, 129),
-        init='glorot_normal',
-        W_regularizer=l2(reg_amount),
-        b_regularizer=l2(reg_amount)
-        ))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Convolution2D(
-        16, 3, 3,
-        init='glorot_normal',
-        W_regularizer=l2(reg_amount),
-        b_regularizer=l2(reg_amount)
-        ))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
+	# CNN MODEL ###############################################################
+	# VGG-like convnet, from Keras examples, http://keras.io/examples/
+	model = Sequential()
+	model.add(Convolution2D(
+		16, 3, 3,
+		border_mode='valid',
+		input_shape=(1, 128, 129),
+		init='glorot_normal',
+		W_regularizer=l2(reg_amount),
+		b_regularizer=l2(reg_amount)
+		))
+	model.add(Activation('relu'))
+	model.add(BatchNormalization())
+	model.add(Convolution2D(
+		16, 3, 3,
+		init='glorot_normal',
+		W_regularizer=l2(reg_amount),
+		b_regularizer=l2(reg_amount)
+		))
+	model.add(Activation('relu'))
+	model.add(BatchNormalization())
+	model.add(MaxPooling2D(pool_size=(2, 2)))
+	model.add(Dropout(0.25))
 
-    model.add(Convolution2D(
-        16, 3, 3,
-        border_mode='valid',
-        init='glorot_normal',
-        W_regularizer=l2(reg_amount),
-        b_regularizer=l2(reg_amount)
-        ))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Convolution2D(
-        16, 3, 3,
-        init='glorot_normal',
-        W_regularizer=l2(reg_amount),
-        b_regularizer=l2(reg_amount)
-        ))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
-
-    model.add(Flatten())
-    # Note: Keras does automatic shape inference.
-    model.add(Dense(
+	model.add(Convolution2D(
+		16, 3, 3,
+		border_mode='valid',
+		init='glorot_normal',
+		W_regularizer=l2(reg_amount),
+		b_regularizer=l2(reg_amount)
+		))
+	model.add(Activation('relu'))
+	model.add(BatchNormalization())
+	model.add(Convolution2D(
+		16, 3, 3,
+		init='glorot_normal',
+		W_regularizer=l2(reg_amount),
+		b_regularizer=l2(reg_amount)
+		))
+	model.add(Activation('relu'))
+	model.add(BatchNormalization())
+	model.add(MaxPooling2D(pool_size=(2, 2)))
+	model.add(Dropout(0.25))
+	
+	model.add(Flatten())
+	# Note: Keras does automatic shape inference.
+	model.add(Dense(
         256,
         init='glorot_normal',
         W_regularizer=l2(reg_amount),
         b_regularizer=l2(reg_amount)
         ))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.5))
-
-    model.add(Dense(
+	model.add(Activation('relu'))
+	model.add(BatchNormalization())
+	model.add(Dropout(0.5))
+	
+	model.add(Dense(
         1,
         init='glorot_normal',
         W_regularizer=l2(reg_amount),
         b_regularizer=l2(reg_amount)
         ))
-    model.add(Activation('linear'))
+	model.add(Activation('linear'))
+	
+	sgd = SGD(lr=learning_rate, decay=1e-6, momentum=0.9, nesterov=True)
 
-    sgd = SGD(lr=learning_rate, decay=1e-6, momentum=0.9, nesterov=True)
-
-    print "Compiling the model...",
-    model.compile(loss='msle', optimizer=sgd)
-    print "Done."
+	print "Compiling the model...",
+	model.compile(loss='msle', optimizer=sgd)
+	print "Done."
 
 
     # FIT MODEL ###############################################################
-
-    # Callback for model checkpointing
-    checkpointer = ModelCheckpoint(
+	
+	# Callback for model checkpointing
+	checkpointer = ModelCheckpoint(
         filepath=os.path.abspath(os.path.join(outputdir, "weights.hdf5")),
         verbose=1,
         save_best_only=True
         )
-
-    history = LossHistory()
-
-    losses = []
+	
+	history = LossHistory()
+	
+	losses = []
 
     #TODO insert epochs - no just 1
 
-    train = np.load(datadict_train).tolist()
+	# Load the training dict
+	train = np.load(datadict_train).tolist()
 
-    # Train on each song in the training set
-    for song_str in train:
-        print "Training on " + song_str
-        bX = np.memmap(
-            train[song_str]['X_path'],
-            dtype='float32',
-            mode='r',
-            shape=tuple(train[song_str]['X_shape'])
-            )
-        by = np.memmap(
-            train[song_str]['y_path'],
-            dtype='float32',
-            mode='r',
-            shape=tuple(train[song_str]['y_shape'])
-            )
-        hist = model.fit(
-                bX, by,
-                nb_epoch=1,
-                batch_size=batch_size,
-                verbose=1
-                )
-        losses.append(hist.history['loss'] )
+	# Get some validation data
+	val = np.load(datadict_val).tolist()
+	print "."
+	val_str = [valstr for valstr in val][0] # Just validate on 1 song
+	Xval = np.memmap(
+		val[val_str]['X_path'],
+		dtype='float32',
+		mode='r',
+		shape=tuple(val[val_str]['X_shape'])
+		)
+	yval = np.memmap(
+		val[val_str]['y_path'],
+		dtype='float32',
+		mode='r',
+		shape=tuple(val[val_str]['y_shape'])
+		)
+	n_val = val[val_str]['y_shape'][0]
+	
+	for epoch in xrange(num_epochs):
+		print "Meta-epoch {0} of {1} ~~~~~~~~~~~~~~~~~~~~~~~~~~".format(epoch+1, num_epochs)
+		# Train on each song in the training set
+		for song_str in train:
+			print "Training SID " + song_str
+			bX = np.memmap(
+				train[song_str]['X_path'],
+				dtype='float32',
+				mode='r',
+				shape=tuple(train[song_str]['X_shape'])
+				)
+			by = np.memmap(
+				train[song_str]['y_path'],
+				dtype='float32',
+				mode='r',
+				shape=tuple(train[song_str]['y_shape'])
+				)
+			rand_val_idx = np.random.choice(n_val, batch_size*3)
+			hist = model.fit(
+					bX, by,
+					nb_epoch=1,
+					batch_size=batch_size,
+					validation_data=(Xval[rand_val_idx], yval[rand_val_idx]),
+					shuffle=True,
+					verbose=1,
+					callbacks=[checkpointer]
+					)
+			losses.append(hist.history['loss'] )
+		
+		
+	np.save(
+		os.path.abspath(os.path.join(outputdir, 'train_history.npy')),
+		np.asarray(losses)
+		)
 
-    np.save(
-        os.path.abspath(os.path.join(outputdir, 'train_history.npy')),
-        np.asarray(losses)
-        )
-
-    # SAVE SOME PLOTS
-    plt.figure(1)
-    plt.plot(losses)
-    plt.xlabel('Song')
-    plt.ylabel('Loss')
-    plt.title('Training loss history')
-    plt.savefig(
-        os.path.abspath(os.path.join(outputdir, 'loss_history_train.pdf')),
-        bbox_inches='tight'
-        )
-    plt.show()
+	# SAVE SOME PLOTS
+	plt.figure(1)
+	plt.plot(losses)
+	plt.xlabel('Song')
+	plt.ylabel('Loss')
+	plt.title('Training loss history')
+	plt.savefig(
+		os.path.abspath(os.path.join(outputdir, 'loss_history_train.pdf')),
+		bbox_inches='tight'
+		)
+	plt.show()
 
     # TEST MODEL ###############################################################
-    #TODO
 
-    # y_true = None
-    # print "Testing",
-    # for iSong in xrange(len(test)):
-        # bX, by = test_batch_gen.next()
-        # n_batch = bX.shape[0]
-        # y_pred[i_start:i_start+n_batch] = np.array(model.predict_on_batch(bX))
-        # y_true = by[:]
+	test = np.load(datadict_test).tolist()
 
-        # plt.figure(3)
-        # plt.plot(y_pred, label="Prediction")
-        # plt.plot(y_true, label="Ground truth")
-        # plt.grid()
-        # plt.legend()
-        # plt.savefig(
-            # os.path.abspath(os.path.join(outputdir, 'test'+str(iSong)+'.pdf')),
-            # bbox_inches='tight'
-            # )
+	print "Testing model ~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	# Test each song in the training set
+	for song_str in test:
+		print "Testing SID " + song_str
+		bX = np.memmap(
+			test[song_str]['X_path'],
+			dtype='float32',
+			mode='r',
+			shape=tuple(test[song_str]['X_shape'])
+			)
+		# Ground truth:
+		by = np.memmap(
+			test[song_str]['y_path'],
+			dtype='float32',
+			mode='r',
+			shape=tuple(test[song_str]['y_shape'])
+			)
+		y_pred = model.predict(bX, batch_size=batch_size, verbose=1)
 
-        # plt.show()
+		plt.figure(3)
+		plt.clf()
+		plt.plot(y_pred, label="Prediction")
+		plt.plot(by, label="Ground truth")
+		plt.grid()
+		plt.legend()
+		plt.title('Test predictions for SID {0}'.format(song_str))
+		plt.savefig(
+			os.path.abspath(os.path.join(outputdir, 'test'+song_str+'.pdf')),
+			bbox_inches='tight'
+			)
 
-        # np.savez(
-            # os.path.abspath(os.path.join(outputdir, 'train_pred_'+str(iSong)+'.npz')),
-            # train=train,
-            # y_pred=y_pred,
-            # y_true=y_true
-            # )
+		plt.show()
+
+		np.savez(
+			os.path.abspath(os.path.join(outputdir, 'train_pred_'+song_str+'.npz')),
+			y_pred=y_pred,
+			y_true=by,
+			sid=int(song_str)
+			)
+	print "All done. Bye."
 
 
 
