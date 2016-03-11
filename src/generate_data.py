@@ -44,10 +44,15 @@ DTYPE = 'float32'
 #DATADIR = os.path.abspath(os.path.join('/mnt','audio'))
 #SALAMIDIR = os.path.abspath(os.path.join('/mnt','salami', 'salami-data-public'))
 
+# FOR USE ON WINDOWS MACHINE
+DATADIR = os.path.abspath('F:\salami-audio')
+SALAMIDIR = os.path.abspath('F:\salami-data-public')
+OUTPUTDIR = os.path.abspath('F:\CNNM-output-data')
+
 # FOR USE ON CCRMA NETWORK
-DATADIR = os.path.abspath('/user/t/tsob/Documents/cs231n/proj/data')
-SALAMIDIR = os.path.abspath('/usr/ccrma/media/databases/mir_datasets/salami/salami-data-public')
-OUTPUTDIR = os.path.abspath('/zap/tsob/audio')
+#DATADIR = os.path.abspath('/user/t/tsob/Documents/cs231n/proj/data')
+#SALAMIDIR = os.path.abspath('/usr/ccrma/media/databases/mir_datasets/salami/salami-data-public')
+#OUTPUTDIR = os.path.abspath('/zap/tsob/audio')
 
 # My local machine
 #DATADIR = os.path.abspath('/home/tim/Projects/convnet-music-structure/salami-audio')
