@@ -30,6 +30,48 @@ from keras.callbacks import ModelCheckpoint
 # My functions
 import generate_data # my data generation function
 
+# One big list of the valid SALAMI ids
+SIDS = [1258, 1522, 1491, 1391, 986,  1392, 1562, 1006, 1303, 1514, 982,  1095,
+        1130, 1216, 1204, 1536, 1492, 1230, 1503, 1096, 1220, 996,  976,  1010,
+        1120, 1064, 1292, 1008, 1431, 1206, 1074, 1356, 1406, 1559, 1566, 1112,
+        1278, 1540, 1423, 1170, 1372, 1014, 1496, 1327, 1439, 1528, 1311, 1226,
+        1138, 1016, 1364, 1484, 1338, 1254, 968,  998,  1302, 1075, 1018, 1166,
+        1239, 1080, 1032, 1447, 984,  1382, 1284, 1043, 1378, 1467, 1038, 1499,
+        1059, 1534, 1283, 1352, 1524, 1428, 1502, 1088, 1236, 1543, 1475, 1551,
+        990,  1589, 1282, 1459, 1379, 1542, 1131, 1460, 1050, 1128, 991,  1560,
+        1139, 1527, 1270, 1450, 1348, 1331, 1091, 1060, 1015, 1501, 1023, 1200,
+        1340, 1579, 1287, 1062, 1251, 1424, 1516, 1448, 1597, 1575, 1376, 1511,
+        1164, 1548, 1555, 1594, 1224, 1470, 1068, 1007, 1104, 1343, 1234, 1152,
+        1108, 1079, 1212, 972,  1190, 1271, 1136, 1300, 1003, 1103, 1434, 958,
+        1082, 1046, 1326, 1518, 999,  1388, 1472, 1507, 1036, 1316, 1274, 1198,
+        1083, 1435, 1387, 1587, 1572, 1290, 1565, 1504, 1127, 1146, 1462, 1268,
+        1094, 1520, 1366, 1347, 1483, 1517, 1319, 1092, 1498, 971,  1044, 1034,
+        1223, 1346, 1532, 1494, 1123, 1299, 1370, 1298, 1155, 1574, 1240, 1235,
+        1264, 1183, 1211, 1586, 1106, 1275, 1027, 1488, 1360, 1490, 1076, 1306,
+        1580, 1259, 1592, 1280, 1547, 1114, 1119, 1322, 1446, 1359, 1058, 1011,
+        1443, 1307, 1098, 1351, 1598, 1180, 1419, 1508, 995,  1550, 1051, 1194,
+        1215, 1247, 1395, 1159, 1531, 1432, 1396, 1276, 1055, 1334, 1272, 1374,
+        1355, 1390, 1022, 1571, 967,  1557, 1286, 1228, 975,  1024, 1314, 1158,
+        988,  1039, 1182, 955,  1564, 1279, 1544, 1332, 1294, 1308, 1515, 962,
+        1420, 1596, 1163, 1047, 1584, 1026, 1436, 1455, 1476, 1403, 1072, 1330,
+        1244, 1000, 1510, 1573, 994,  1028, 1549, 1179, 1162, 1552, 1238, 1371,
+        1438, 992,  1124, 1367, 1111, 1590, 980,  1242, 1567, 1556, 1054, 1354,
+        1539, 1116, 1148, 1004, 1533, 1232, 1339, 1324, 1291, 978,  1048, 1263,
+        1582, 1315, 1176, 1248, 1509, 1219, 1407, 1400, 1243, 1172, 1442, 1218,
+        1363, 1090, 1067, 1202, 1523, 1187, 1150, 1195, 956,  1452, 1186, 1563,
+        1312, 1519, 1427, 1042, 1412, 1595, 1323, 1184, 1086, 1554, 1546, 1246,
+        1260, 1479, 1099, 1318, 1368, 1558, 1122, 1384, 1525, 974,  1478, 1118,
+        1588, 1418, 1456, 963,  1078, 1408, 1402, 1444, 1142, 983,  1404, 1250,
+        1464, 1526, 1207, 1304, 1174, 1019, 1151, 1576, 1358, 1375, 1336, 1192,
+        1362, 1102, 1474, 1288, 1296, 1386, 1066, 1056, 970,  1512, 1399, 1416,
+        1188, 1070, 1107, 1063, 1295, 1581, 1266, 1012, 1175, 1422, 1134, 979,
+        1342, 1154, 1156, 1203, 1168, 1415, 1541, 1132, 1256, 1458, 1482, 1035,
+        1196, 1583, 1530, 1310, 1328, 1143, 1100, 1506, 1135, 1451, 1147, 1191,
+        1591, 960,  1110, 1414, 1383, 964,  1335, 1231, 1210, 1535, 1394, 1262,
+        959,  1214, 1350, 1570, 1084, 1495, 1020, 1071, 1568, 1380, 1144, 1487,
+        1222, 1199, 1538, 1160, 1578, 1468]
+
+
 # Callback for loss history
 class LossHistory(keras.callbacks.Callback):
     """
@@ -44,104 +86,61 @@ class LossHistory(keras.callbacks.Callback):
 
 TRAIN_CAP = None
 
+
 class DataGenerator(object):
     '''
     Generate minibatches from serialized data.
     '''
-    def __init__(self, datadict, batch_size=32, shuffle=False, seed=None):
+    def __init__(self, datadict, shuffle=False, seed=None):
         self.lock = threading.Lock()
         self.data       = datadict
-        self.batch_size = batch_size
         self.shuffle    = shuffle
         self.seed       = seed
-        self = self.flow(
-            datadict,
-            batch_size=batch_size,
-            shuffle=False,
-            seed=None,
-            save_to_dir=None,
-            save_prefix="",
-            save_format="jpeg")
+        self.n_songs    = len(datadict)
+        self.cur_song    = 0
+        self.sidstr     = [sid for sid in datadict]
 
+    def __iter__(self):
+        return self
+
+    # Python 3 compatibility
+    def __next__(self):
+        return self.next()
 
     def next(self):
         # for python 2.x
         # Keep under lock only the mechainsem which advance the indexing of each batch
         # see # http://anandology.com/blog/using-iterators-and-generators/
         with self.lock:
-            index_array, current_index, current_batch_size = next(self.flow_generator)
-        # The transformation of images is not under thread lock so it can be done in parallel
-        offsetmul = self.data['Xshape'][1] * self.data['Xshape'][2] * self.data['Xshape'][3]
-        x_path = os.path.abspath(
-            os.path.join(self.data['datadir'], self.data['Xfile'])
-            )
-        y_path = os.path.abspath(
-            os.path.join(self.data['datadir'], self.data['yfile'])
-            )
-        bX = np.memmap(
-            x_path,
-            dtype='float32',
-            mode='r',
-            shape=(current_batch_size, self.data['Xshape'][1], self.data['Xshape'][2], self.data['Xshape'][3]),
-            offset=current_index*offsetmul
-            )
-        bY = np.memmap(
-            y_path,
-            dtype='float32',
-            mode='r',
-            shape=(current_batch_size, 1),
-            offset=current_index
-            )
+            song_idx, self.cur_song = self.cur_song, self.cur_song+1
+
+        bX, bY = (None, None)
+        if song_idx < self.n_songs:
+            x_path = self.data[self.sidstr[song_idx]]['X_path']
+            y_path = self.data[self.sidstr[song_idx]]['y_path']
+            bX = np.memmap(
+                x_path,
+                dtype='float32',
+                mode='r',
+                shape=tuple(self.data[self.sidstr[song_idx]]['X_shape'])
+                )
+            bY = np.memmap(
+                y_path,
+                dtype='float32',
+                mode='r',
+                shape=tuple(self.data[self.sidstr[song_idx]]['y_shape'])
+                )
+            return bX, bY
+        else:
+            raise StopIteration()
         return bX, bY
 
-    def flow(self, datadict, batch_size=32, shuffle=False, seed=None,
-             save_to_dir=None, save_prefix="", save_format="jpeg"):
-        assert datadict['Xshape'][0] == datadict['yshape'][0]
-        self.save_to_dir = save_to_dir
-        self.save_prefix = save_prefix
-        self.save_format = save_format
-        self.flow_generator = self._flow_index(datadict['Xshape'][0], batch_size, shuffle, seed)
-        return self
-
-    def _flow_index(self, N, batch_size=32, shuffle=False, seed=None):
-
-        # Check cap
-        if TRAIN_CAP:
-            N = min(N, TRAIN_CAP)
-
-        b = 0
-        total_b = 0
-        while 1:
-            if b == 0:
-                if seed is not None:
-                    np.random.seed(seed + total_b)
-
-                if shuffle:
-                    index_array = np.random.permutation(N)
-                else:
-                    index_array = np.arange(N)
-
-            current_index = (b * batch_size) % N
-            if N >= current_index + batch_size:
-                current_batch_size = batch_size
-            else:
-                current_batch_size = N - current_index
-
-            if current_batch_size == batch_size:
-                b += 1
-            else:
-                b = 0
-            total_b += 1
-            yield index_array[current_index: current_index + current_batch_size], current_index, current_batch_size
-
-
-
 def main(
+        datadict_train,
+        datadict_val,
+        datadict_test,
         num_epochs=1,
-        n_songs_train=1,
-        n_songs_val=1,
-        n_songs_test=1,
-        batch_size=256,
+        batch_size=128,
         learning_rate=1e-4,
         datadir=os.path.abspath('../salami-audio/'),
         salamidir=os.path.abspath('../salami-data-public/'),
@@ -151,33 +150,6 @@ def main(
     """
     Main function
     """
-
-    # DATA ####################################################################
-
-    train, val, test = None, None, None
-    try:
-        # Try to load data, if we already serialized it and have a
-        # datadicts.npz file available
-        train, val, test = generate_data.use_preparsed_data(
-            outputdir=outputdir
-            )
-    except:
-        # Otherwise generate the data ourselves
-        train, val, test = generate_data.get_data(
-            datadir=datadir,
-            salamidir=salamidir,
-            outputdir=outputdir,
-            n_songs_train=n_songs_train,
-            n_songs_val=n_songs_val,
-            n_songs_test=n_songs_test,
-            seed=None
-            )
-
-    # Print the dimensions
-    print "Data dimensions:"
-    for datadict in [train, val, test]:
-        print '\t', datadict['Xshape'], '\t', datadict['yshape']
-
 
     # CNN MODEL ###############################################################
     # VGG-like convnet, from Keras examples, http://keras.io/examples/
@@ -261,107 +233,81 @@ def main(
 
     history = LossHistory()
 
+    losses = []
 
-    # Instantiate batch generators, so we don't have to have all data in memory
-    train_batch_gen = DataGenerator(
-        train,
-        batch_size=batch_size,
-        shuffle=True,
-        seed=None
-        )
+    #TODO insert epochs - no just 1
 
-    val_batch_gen = DataGenerator(
-        val,
-        batch_size=batch_size,
-        shuffle=False
-        )
+    train = np.load(datadict_train).tolist()
 
-    hist = model.fit_generator(
-        train_batch_gen,
-        min(TRAIN_CAP, train['Xshape'][0]), # samples per epoch
-        num_epochs,
-        callbacks=[checkpointer, history],
-        validation_data = val_batch_gen,
-        nb_val_samples = min(TRAIN_CAP, val['Xshape'][0]),
-        nb_worker=3,
-        nb_val_worker=3
-        )
+    # Train on each song in the training set
+    for song_str in train:
+        print "Training on " + song_str
+        bX = np.memmap(
+            train[song_str]['X_path'],
+            dtype='float32',
+            mode='r',
+            shape=tuple(train[song_str]['X_shape'])
+            )
+        by = np.memmap(
+            train[song_str]['y_path'],
+            dtype='float32',
+            mode='r',
+            shape=tuple(train[song_str]['y_shape'])
+            )
+        hist = model.fit(
+                bX, by,
+                nb_epoch=1,
+                batch_size=batch_size,
+                verbose=1
+                )
+        losses.append(hist.history['loss'] )
 
-    np.savez(
-        os.path.abspath(os.path.join(outputdir, 'train_history.npz')),
-        loss=hist.history['loss'],
-        loss_per_minibatch=history.losses,
-        val_loss=hist.history['val_loss']
+    np.save(
+        os.path.abspath(os.path.join(outputdir, 'train_history.npy')),
+        np.asarray(losses)
         )
 
     # SAVE SOME PLOTS
     plt.figure(1)
-    plt.plot(history.losses)
-    plt.xlabel('Minibatch')
+    plt.plot(losses)
+    plt.xlabel('Song')
     plt.ylabel('Loss')
     plt.title('Training loss history')
     plt.savefig(
         os.path.abspath(os.path.join(outputdir, 'loss_history_train.pdf')),
         bbox_inches='tight'
         )
-
-    plt.figure(2)
-    plt.plot(hist.history['loss'], label="Training loss")
-    plt.plot(hist.history['val_loss'], label="Validation loss")
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.savefig(
-        os.path.abspath(os.path.join(outputdir, 'loss_history_epoch_val_train.pdf')),
-        bbox_inches='tight'
-        )
-
-    # TEST MODEL ###############################################################
-    test_batch_gen = DataGenerator(
-        test,
-        batch_size=batch_size,
-        shuffle=False,
-        seed=None
-        )
-
-    if TRAIN_CAP:
-        test_len = min(test['yshape'][0], TRAIN_CAP)
-    else:
-        test_len = test['yshape'][0]
-
-    n_batches = int(math.ceil(test_len/float(batch_size)))
-    y_pred = np.zeros((n_batches*batch_size, 1))
-    y_true = np.zeros((n_batches*batch_size, 1))
-    i_start = 0
-
-    print "Testing",
-    for iBatch in xrange(n_batches):
-        bX, by = test_batch_gen.next()
-        n_batch = bX.shape[0]
-        y_pred[i_start:i_start+n_batch] = np.array(model.predict_on_batch(bX))
-        y_true[i_start:i_start+n_batch] = by[:]
-        i_start += n_batch
-        print ".",
-    print "."
-
-    plt.figure(3)
-    plt.plot(y_pred, label="Prediction")
-    plt.plot(y_true, label="Ground truth")
-    plt.grid()
-    plt.legend()
-    plt.savefig(
-        os.path.abspath(os.path.join(outputdir, 'test.pdf')),
-        bbox_inches='tight'
-        )
-
     plt.show()
 
-    np.savez(
-        os.path.abspath(os.path.join(outputdir, 'train_pred.npz')),
-        train=train,
-        y_pred=y_pred,
-        y_true=y_true
-        )
+    # TEST MODEL ###############################################################
+    #TODO
+
+    # y_true = None
+    # print "Testing",
+    # for iSong in xrange(len(test)):
+        # bX, by = test_batch_gen.next()
+        # n_batch = bX.shape[0]
+        # y_pred[i_start:i_start+n_batch] = np.array(model.predict_on_batch(bX))
+        # y_true = by[:]
+
+        # plt.figure(3)
+        # plt.plot(y_pred, label="Prediction")
+        # plt.plot(y_true, label="Ground truth")
+        # plt.grid()
+        # plt.legend()
+        # plt.savefig(
+            # os.path.abspath(os.path.join(outputdir, 'test'+str(iSong)+'.pdf')),
+            # bbox_inches='tight'
+            # )
+
+        # plt.show()
+
+        # np.savez(
+            # os.path.abspath(os.path.join(outputdir, 'train_pred_'+str(iSong)+'.npz')),
+            # train=train,
+            # y_pred=y_pred,
+            # y_true=y_true
+            # )
 
 
 
@@ -371,21 +317,18 @@ if __name__ == "__main__":
         )
     P.add_argument(
         '-t', '--train',
-        help='Number of songs to include in training set.',
-        required=False,
-        default=1
+        help='Path to data dictionary for training set.',
+        required=True,
         )
     P.add_argument(
         '-v', '--val',
-        help='Number of songs to include in validation set.',
-        required=False,
-        default=1
+        help='Path to data dictionary for validation set.',
+        required=True,
         )
     P.add_argument(
         '-s', '--test',
-        help='Number of songs to include in test set.',
-        required=False,
-        default=1
+        help='Path to data dictionary for test set.',
+        required=True,
         )
     P.add_argument(
         '-e', '--epochs',
@@ -404,12 +347,6 @@ if __name__ == "__main__":
         help='Batch size.',
         required=False,
         default=256
-        )
-    P.add_argument(
-        '-d', '--datadir',
-        help='Directory with salami audio files.',
-        required=False,
-        default='/user/t/tsob/Documents/cs231n/proj/data/'
         )
     P.add_argument(
         '-ds', '--salamidir',
@@ -437,19 +374,15 @@ if __name__ == "__main__":
         )
 
     ARGS = P.parse_args()
-    TRAIN_CAP = int(ARGS.traincap)
-    if TRAIN_CAP == sys.maxint:
-        TRAIN_CAP == None
 
     # Start the show
     main(
+        datadict_train=ARGS.train,
+        datadict_val=ARGS.val,
+        datadict_test=ARGS.test,
         num_epochs=int(ARGS.epochs),
-        n_songs_train=int(ARGS.train),
-        n_songs_val=int(ARGS.val),
-        n_songs_test=int(ARGS.test),
-        learning_rate=float(ARGS.learningrate),
         batch_size=int(ARGS.batchsize),
-        datadir=os.path.abspath(ARGS.datadir),
+        learning_rate=float(ARGS.learningrate),
         salamidir=os.path.abspath(ARGS.salamidir),
         outputdir=os.path.abspath(ARGS.workingdir),
         reg_amount=float(ARGS.regamount)
