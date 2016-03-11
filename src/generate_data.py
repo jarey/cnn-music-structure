@@ -45,12 +45,14 @@ DTYPE = 'float32'
 #SALAMIDIR = os.path.abspath(os.path.join('/mnt','salami', 'salami-data-public'))
 
 # FOR USE ON CCRMA NETWORK
-#DATADIR = os.path.abspath('/user/t/tsob/Documents/cs231n/proj/data')
-#SALAMIDIR = os.path.abspath('/usr/ccrma/media/databases/mir_datasets/salami/salami-data-public')
+DATADIR = os.path.abspath('/user/t/tsob/Documents/cs231n/proj/data')
+SALAMIDIR = os.path.abspath('/usr/ccrma/media/databases/mir_datasets/salami/salami-data-public')
+OUTPUTDIR = os.path.abspath('/zap/tsob/audio')
 
-DATADIR = os.path.abspath('/home/tim/Projects/convnet-music-structure/salami-audio')
-SALAMIDIR = os.path.abspath('/home/tim/Projects/convnet-music-structure/salami-data-public')
-OUTPUTDIR = os.path.abspath('/home/tim/Projects/convnet-music-structure/src/zap/')
+# My local machine
+#DATADIR = os.path.abspath('/home/tim/Projects/convnet-music-structure/salami-audio')
+#SALAMIDIR = os.path.abspath('/home/tim/Projects/convnet-music-structure/salami-data-public')
+#OUTPUTDIR = os.path.abspath('/home/tim/Projects/convnet-music-structure/src/zap/')
 
 # One big list of the valid SALAMI ids
 SIDS = [1258, 1522, 1491, 1391, 986,  1392, 1562, 1006, 1303, 1514, 982,  1095,
