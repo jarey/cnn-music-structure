@@ -68,3 +68,5 @@ milestone/
 
 # Vim
 *.swp
+
+.idea/

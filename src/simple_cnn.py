@@ -176,28 +176,28 @@ def main(
     theano.config.floatX = 'float32'
 
     train, val, test = None, None, None
-    try:
-        train, val, test = use_preparsed_data(
-            outputdir='/zap/tsob/audio/',
-            )
-    except:
-        train, val, test = get_data(
-            n_songs_train=n_songs_train,
-            n_songs_val=n_songs_val,
-            n_songs_test=n_songs_test,
-            outputdir='/zap/tsob/audio/',
-            seed=None
-            )
+    #try:
+    #    train, val, test = use_preparsed_data(
+    #        outputdir='/zap/tsob/audio/',
+    #        )
+    #except:
+    train, val, test = get_data(
+        n_songs_train=n_songs_train,
+        n_songs_val=n_songs_val,
+        n_songs_test=n_songs_test,
+        outputdir='/zap/tsob/audio/',
+        seed=None
+        )
 
     # Save the returned metadata
     np.savez('/zap/tsob/audio/metadata', train, val, test)
 
     # Print the dimensions
-    print "Data dimensions:"
+    print("Data dimensions:")
     for datapt in [train['Xshape'], train['yshape'],
                    val['Xshape'], val['yshape'],
                    test['Xshape'], test['yshape']]:
-        print datapt
+        print(datapt)
 
     # Parse dimensions
     n_train = train['yshape'][0]
@@ -207,12 +207,12 @@ def main(
     n_feats = train['Xshape'][2]
     n_frames = train['Xshape'][3]
 
-    print "n_train  = {0}".format(n_train)
-    print "n_val    = {0}".format(n_val)
-    print "n_test   = {0}".format(n_test)
-    print "n_chan   = {0}".format(n_chan)
-    print "n_feats  = {0}".format(n_feats)
-    print "n_frames = {0}".format(n_frames)
+    print("n_train  = {0}").format(n_train)
+    print("n_val    = {0}").format(n_val)
+    print("n_test   = {0}").format(n_test)
+    print("n_chan   = {0}").format(n_chan)
+    print("n_feats  = {0}").format(n_feats)
+    print("n_frames = {0}").format(n_frames)
 
     # Prepare Theano variables for inputs and targets
     input_var = T.tensor4(name='inputs')
@@ -347,7 +347,7 @@ def main(
     np.savez('/zap/tsob/audio/model'+timestr+'.npz', *lasagne.layers.get_all_param_values(network))
     np.save('/zap/tsob/audio/train_error_hist'+timestr+'.npy', train_error_hist)
     np.save('/zap/tsob/audio/test_predictions'+timestr+'.npy', test_predictions)
-    print "Wrote model to {0}, test error histogram to {1}, and test predictions to {2}".format(
+    print("Wrote model to {0}, test error histogram to {1}, and test predictions to {2}").format(
         'model'+timestr+'.npz',
         'train_error_hist'+timestr+'.npy',
         'test_predictions'+timestr+'.npy'

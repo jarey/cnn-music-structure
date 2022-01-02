@@ -11,6 +11,7 @@ import os
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+from past.builtins import xrange
 from scipy import signal
 import librosa
 import util.evaluation as ev
@@ -191,7 +192,7 @@ def serialize_song(
     X_shape = [0, 1, N_MEL, N_FRAME_CONTEXT]
     y_shape = [0, 1]
 
-    print "SID: {0},\tfile: {1}".format(sid, path)
+    print("SID: {0},\tfile: {1}").format(sid, path)
 
     y_path = os.path.abspath(
         os.path.join(outputdir, prefix + str(sid) + '_y')
@@ -379,9 +380,9 @@ if __name__ == "__main__":
         outputdir=ARGS.workingdir,
         prefix='test'
         )
-    print 'TRAINING SET:'
-    print train
-    print 'VALIDATION SET:'
-    print val
-    print 'TEST SET:'
-    print test
+    print('TRAINING SET:')
+    print(train)
+    print('VALIDATION SET:')
+    print(val)
+    print('TEST SET:')
+    print(test)
